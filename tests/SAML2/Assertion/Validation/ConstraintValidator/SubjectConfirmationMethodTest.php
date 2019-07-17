@@ -2,7 +2,6 @@
 
 namespace SAML2\Assertion\Validation\ConstraintValidator;
 
-use Mockery as m;
 use SAML2\Assertion\Validation\Result;
 use SAML2\Constants;
 
@@ -13,10 +12,12 @@ class SubjectConfirmationMethodTest extends \PHPUnit_Framework_TestCase
      */
     private $subjectConfirmation;
 
+
     public function setUp()
     {
-        $this->subjectConfirmation = m::mock('SAML2\XML\saml\SubjectConfirmation');
+        $this->subjectConfirmation = new \SAML2\XML\saml\SubjectConfirmation();
     }
+
 
     /**
      * @group assertion-validation
@@ -24,7 +25,7 @@ class SubjectConfirmationMethodTest extends \PHPUnit_Framework_TestCase
      */
     public function a_subject_confirmation_with_bearer_method_is_valid()
     {
-        $this->subjectConfirmation->Method = Constants::CM_BEARER;
+        $this->subjectConfirmation->setMethod(Constants::CM_BEARER);
 
         $validator = new SubjectConfirmationMethod();
         $result = new Result();
@@ -34,13 +35,14 @@ class SubjectConfirmationMethodTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($result->isValid());
     }
 
+
     /**
      * @group assertion-validation
      * @test
      */
     public function a_subject_confirmation_with_holder_of_key_method_is_not_valid()
     {
-        $this->subjectConfirmation->Method = Constants::CM_HOK;
+        $this->subjectConfirmation->setMethod(Constants::CM_HOK);
 
         $validator = new SubjectConfirmationMethod();
         $result    = new Result();

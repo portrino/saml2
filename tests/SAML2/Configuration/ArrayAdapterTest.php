@@ -10,12 +10,13 @@ class ArrayAdapterTest extends \PHPUnit_Framework_TestCase
      */
     public function set_configuration_can_be_queried()
     {
-        $configuration = new ArrayAdapter(array('foo' => 'bar'));
+        $configuration = new ArrayAdapter(['foo' => 'bar']);
 
         $this->assertTrue($configuration->has('foo'));
         $this->assertFalse($configuration->has('quux'));
         $this->assertEquals('bar', $configuration->get('foo'));
     }
+
 
     /**
      * @group configuration
@@ -23,7 +24,7 @@ class ArrayAdapterTest extends \PHPUnit_Framework_TestCase
      */
     public function default_values_are_returned_for_unavailable_configuration()
     {
-        $configuration = array('foo' => 'bar');
+        $configuration = ['foo' => 'bar'];
 
         $arrayAdapter = new ArrayAdapter($configuration);
 

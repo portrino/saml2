@@ -19,10 +19,10 @@ class AttributeTest extends \PHPUnit_Framework_TestCase
         $attribute->Name = 'TheName';
         $attribute->NameFormat = 'TheNameFormat';
         $attribute->FriendlyName = 'TheFriendlyName';
-        $attribute->AttributeValue = array(
+        $attribute->AttributeValue = [
             new AttributeValue('FirstValue'),
             new AttributeValue('SecondValue'),
-        );
+        ];
 
         $document = DOMDocumentFactory::fromString('<root />');
         $attributeElement = $attribute->toXML($document->firstChild);
@@ -35,6 +35,7 @@ class AttributeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('TheNameFormat', $attributeElement->getAttribute('NameFormat'));
         $this->assertEquals('TheFriendlyName', $attributeElement->getAttribute('FriendlyName'));
     }
+
 
     public function testUnmarshalling()
     {
@@ -55,6 +56,7 @@ XML
         $this->assertEquals('FirstValue', (string)$attribute->AttributeValue[0]);
         $this->assertEquals('SecondValue', (string)$attribute->AttributeValue[1]);
     }
+
 
     public function testUnmarshallingFailure()
     {

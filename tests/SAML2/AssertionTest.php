@@ -17,7 +17,7 @@ class AssertionTest extends \PHPUnit_Framework_TestCase
         // Create an assertion
         $assertion = new Assertion();
         $assertion->setIssuer('testIssuer');
-        $assertion->setValidAudiences(array('audience1', 'audience2'));
+        $assertion->setValidAudiences(['audience1', 'audience2']);
         $assertion->setAuthnContext('someAuthnContext');
 
         // Marshall it to a \DOMElement
@@ -45,6 +45,7 @@ class AssertionTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(1, $authnContextElements);
         $this->assertEquals('someAuthnContext', $authnContextElements[0]->textContent);
     }
+
 
     /**
      * Test to parse a basic assertion
@@ -93,6 +94,7 @@ XML;
         $this->assertEquals('someIdP2', $assertionAuthenticatingAuthorities[1]);
     }
 
+
     /**
      * Test an assertion with lots of options
      */
@@ -102,7 +104,7 @@ XML;
         $assertion = new Assertion();
 
         $assertion->setIssuer('testIssuer');
-        $assertion->setValidAudiences(array('audience1', 'audience2'));
+        $assertion->setValidAudiences(['audience1', 'audience2']);
 
         // deprecated function
         $this->assertNull($assertion->getAuthnContext());
@@ -120,12 +122,13 @@ XML;
 
         $assertion->setSessionIndex("idx1");
 
-        $assertion->setAuthenticatingAuthority(array("idp1","idp2"));
+        $assertion->setAuthenticatingAuthority(["idp1", "idp2"]);
 
-        $assertion->setAttributes(array(
-            "name1" => array("value1","value2"),
-            "name2" => array(2),
-            "name3" => array(null)));
+        $assertion->setAttributes([
+            "name1" => ["value1", "value2"],
+            "name2" => [2],
+            "name3" => [null]
+        ]);
         $assertion->setAttributeNameFormat("urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified");
 
         $assertionElement = $assertion->toXML()->ownerDocument->saveXML();
@@ -155,6 +158,104 @@ XML;
         //$this->assertNull($attributes["name3"][0]);
         $this->assertEquals("urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified", $assertionToVerify->getAttributeNameFormat());
     }
+
+
+    /**
+     * Test an assertion attribute value types options
+     */
+    public function testMarshallingUnmarshallingAttributeValTypes()
+    {
+        // Create an assertion
+        $assertion = new Assertion();
+
+        $assertion->setIssuer('testIssuer');
+        $assertion->setValidAudiences(['audience1', 'audience2']);
+
+        $assertion->setAuthnContext('someAuthnContext');
+
+        $assertion->setAuthenticatingAuthority(["idp1", "idp2"]);
+
+        $assertion->setAttributes([
+            "name1" => ["value1",123,"2017-31-12"],
+            "name2" => [2],
+            "name3" => [1234, "+2345"]
+        ]);
+        $assertion->setAttributeNameFormat("urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified");
+
+        // set xs:type for first and third name1 values, and all name3 values.
+        // second name1 value and all name2 values will use default behaviour
+        $assertion->setAttributesValueTypes([
+            "name1" => ["xs:string", null, "xs:date"],
+            "name3" => "xs:decimal"
+        ]);
+
+        $assertionElement = $assertion->toXML()->ownerDocument->saveXML();
+
+        $assertionToVerify = new Assertion(DOMDocumentFactory::fromString($assertionElement)->firstChild);
+
+        $authauth = $assertionToVerify->getAuthenticatingAuthority();
+        $this->assertCount(2, $authauth);
+        $this->assertEquals("idp2", $authauth[1]);
+
+        $attributes = $assertionToVerify->getAttributes();
+        $this->assertCount(3, $attributes);
+        $this->assertCount(3, $attributes['name1']);
+        $this->assertEquals("value1", $attributes['name1'][0]);
+        $this->assertEquals(123, $attributes['name1'][1]);
+        $this->assertEquals("2017-31-12", $attributes['name1'][2]);
+        $this->assertEquals(2, $attributes['name2'][0]);
+        $this->assertCount(2, $attributes['name3']);
+        $this->assertEquals("1234", $attributes['name3'][0]);
+        $this->assertEquals("+2345", $attributes['name3'][1]);
+        $this->assertEquals("urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified", $assertionToVerify->getAttributeNameFormat());
+
+        $attributesValueTypes = $assertionToVerify->getAttributesValueTypes();
+        $this->assertCount(3, $attributesValueTypes);
+        $this->assertCount(3, $attributesValueTypes['name1']);
+        $this->assertEquals("xs:string", $attributesValueTypes['name1'][0]);
+        $this->assertEquals("xs:integer", $attributesValueTypes['name1'][1]);
+        $this->assertEquals("xs:date", $attributesValueTypes['name1'][2]);
+        $this->assertCount(1, $attributesValueTypes['name2']);
+        $this->assertEquals("xs:integer", $attributesValueTypes['name2'][0]);
+        $this->assertCount(2, $attributesValueTypes['name3']);
+        $this->assertEquals("xs:decimal", $attributesValueTypes['name3'][0]);
+        $this->assertEquals("xs:decimal", $attributesValueTypes['name3'][1]);
+    }
+
+
+    /**
+     * Test attribute value types check in Marshalling an assertion.
+     */
+
+    public function testMarshallingWrongAttributeValTypes()
+    {
+        // Create an assertion
+        $assertion = new Assertion();
+
+        $assertion->setIssuer('testIssuer');
+        $assertion->setValidAudiences(['audience1', 'audience2']);
+
+        $assertion->setAuthnContext('someAuthnContext');
+
+        $assertion->setAuthenticatingAuthority(["idp1", "idp2"]);
+
+        $assertion->setAttributes([
+            "name1" => ["value1", "2017-31-12"],
+            "name2" => [2],
+            "name3" => [1234, "+2345"]
+        ]);
+        $assertion->setAttributeNameFormat("urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified");
+
+        // set wrong number elements in name1
+        $assertion->setAttributesValueTypes([
+            "name1" => ["xs:string"],
+            "name3" => "xs:decimal"
+        ]);
+
+        $this->setExpectedException('Exception', "Array of value types and array of values have different size for attribute 'name1'");
+        $assertionElement = $assertion->toXML()->ownerDocument->saveXML();
+    }
+
 
     /**
      * Test parsing AuthnContext elements Decl and ClassRef
@@ -197,6 +298,7 @@ XML;
         $this->assertEquals('someAuthnContext', $assertion->getAuthnContext());
     }
 
+
     /**
      * Test parsing AuthnContext elements DeclRef and ClassRef
      */
@@ -227,6 +329,7 @@ XML;
         $this->assertEquals('someAuthnContext', $assertion->getAuthnContextClassRef());
     }
 
+
     /**
      * Test setting an AuthnContextDecl chunk.
      */
@@ -248,6 +351,41 @@ XML;
         $this->assertCount(1, $acElements);
         $this->assertEquals('samlac:AuthenticationContextDeclaration', $acElements[0]->firstChild->tagName);
         $this->assertEquals('urn:oasis:names:tc:SAML:2.0:ac', $acElements[0]->firstChild->namespaceURI);
+    }
+
+
+    /**
+     * @group Assertion
+     */
+    public function testConvertIssuerToXML()
+    {
+        // first, try with common Issuer objects (Format=entity)
+        $assertion = new Assertion();
+        $issuer = new XML\saml\Issuer();
+        $issuer->value = 'https://gateway.stepup.org/saml20/sp/metadata';
+        $assertion->setIssuer($issuer);
+        $xml = $assertion->toXML();
+        $xml_issuer = Utils::xpQuery($xml, './saml_assertion:Issuer');
+        $xml_issuer = $xml_issuer[0];
+
+        $this->assertFalse($xml_issuer->hasAttributes());
+        $this->assertEquals($issuer->value, $xml_issuer->textContent);
+
+        // now, try an Issuer with another format and attributes
+        $issuer->setFormat(Constants::NAMEID_UNSPECIFIED);
+        $issuer->setNameQualifier('SomeNameQualifier');
+        $issuer->setSPNameQualifier('SomeSPNameQualifier');
+        $issuer->setSPProvidedID('SomeSPProvidedID');
+        $assertion->setIssuer($issuer);
+        $xml = $assertion->toXML();
+        $xml_issuer = Utils::xpQuery($xml, './saml_assertion:Issuer');
+        $xml_issuer = $xml_issuer[0];
+
+        $this->assertTrue($xml_issuer->hasAttributes());
+        $this->assertEquals($issuer->getValue(), $xml_issuer->textContent);
+        $this->assertEquals($issuer->getNameQualifier(), $xml_issuer->getAttribute('NameQualifier'));
+        $this->assertEquals($issuer->getSPNameQualifier(), $xml_issuer->getAttribute('SPNameQualifier'));
+        $this->assertEquals($issuer->getSPProvidedID(), $xml_issuer->getAttribute('SPProvidedID'));
     }
 
 
@@ -314,6 +452,7 @@ XML;
         $this->assertEquals('/relative/path/to/document.xml', $assertion->getAuthnContext());
     }
 
+
     public function testMustHaveClassRefOrDeclOrDeclRef()
     {
         // Unmarshall an assertion
@@ -340,6 +479,40 @@ XML
         }
         $this->assertNotEmpty($e);
     }
+
+
+    public function testGetSubjectConfirmationData()
+    {
+        $document = DOMDocumentFactory::fromString(<<<XML
+<saml:Assertion xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+                ID="_593e33ddf86449ce4d4c22b60ac48e067d98a0b2bf"
+                Version="2.0"
+                IssueInstant="2010-03-05T13:34:28Z"
+>
+  <saml:Issuer>testIssuer</saml:Issuer>
+  <saml:Subject>
+    <saml:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified">joehoe</saml:NameID>
+    <saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">
+      <saml:SubjectConfirmationData NotOnOrAfter="2010-03-05T13:42:06Z"
+        Recipient="https://example.org/authentication/consume-assertion"
+        InResponseTo="_004387940075992d891e90c6a10bc9fd1bd443ee85a61b7d07fd12b0843d"
+        />
+    </saml:SubjectConfirmation>
+  </saml:Subject>
+</saml:Assertion>
+XML
+        );
+
+        $assertion = new Assertion($document->firstChild);
+        $sc = $assertion->getSubjectConfirmation();
+
+        $this->assertCount(1, $sc);
+        $this->assertInstanceOf('SAML2\XML\saml\SubjectConfirmation', $sc[0]);
+        $this->assertEquals('urn:oasis:names:tc:SAML:2.0:cm:bearer', $sc[0]->getMethod());
+        $this->assertEquals('https://example.org/authentication/consume-assertion', $sc[0]->getSubjectConfirmationData()->getRecipient());
+        $this->assertEquals(1267796526, $sc[0]->getSubjectConfirmationData()->getNotOnOrAfter());
+    }
+
 
     /**
      * Tests that AuthnContextDeclRef is not mistaken for AuthnContextClassRef.
@@ -371,6 +544,7 @@ XML
         $this->assertEmpty($assertion->getAuthnContextClassRef());
         $this->assertEquals($authnContextDeclRef, $assertion->getAuthnContextDeclRef());
     }
+
 
     public function testHasEncryptedAttributes()
     {
@@ -435,6 +609,52 @@ XML
         $this->assertTrue($assertion->hasEncryptedAttributes());
     }
 
+
+    public function testHasEncryptedAttributes2()
+    {
+        $document = new \DOMDocument();
+        $document->loadXML(<<<XML
+    <saml:Assertion xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+                    Version="2.0"
+                    ID="_93af655219464fb403b34436cfb0c5cb1d9a5502"
+                    IssueInstant="1970-01-01T01:33:31Z">
+      <saml:Issuer>Provider</saml:Issuer>
+      <saml:Subject>
+        <saml:NameID Format="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent">s00000000:123456789</saml:NameID>
+        <saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">
+          <saml:SubjectConfirmationData NotOnOrAfter="2011-08-31T08:51:05Z" Recipient="https://sp.example.com/assertion_consumer" InResponseTo="_13603a6565a69297e9809175b052d115965121c8" />
+        </saml:SubjectConfirmation>
+      </saml:Subject>
+      <saml:Conditions NotOnOrAfter="2011-08-31T08:51:05Z" NotBefore="2011-08-31T08:51:05Z">
+        <saml:AudienceRestriction>
+          <saml:Audience>ServiceProvider</saml:Audience>
+        </saml:AudienceRestriction>
+      </saml:Conditions>
+      <saml:AuthnStatement AuthnInstant="2011-08-31T08:51:05Z" SessionIndex="_93af655219464fb403b34436cfb0c5cb1d9a5502">
+        <saml:AuthnContext>
+          <saml:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</saml:AuthnContextClassRef>
+        </saml:AuthnContext>
+        <saml:SubjectLocality Address="127.0.0.1"/>
+      </saml:AuthnStatement>
+      <saml:AttributeStatement>
+        <saml:Attribute Name="urn:ServiceID">
+          <saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">1</saml:AttributeValue>
+        </saml:Attribute>
+        <saml:Attribute Name="urn:EntityConcernedID">
+          <saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">1</saml:AttributeValue>
+        </saml:Attribute>
+        <saml:Attribute Name="urn:EntityConcernedSubID">
+          <saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">1</saml:AttributeValue>
+        </saml:Attribute>
+      </saml:AttributeStatement>
+    </saml:Assertion>
+XML
+        );
+        $assertion = new Assertion($document->firstChild);
+        $this->assertFalse($assertion->hasEncryptedAttributes());
+    }
+
+
     /**
      * @group Assertion
      */
@@ -483,7 +703,7 @@ XML
 
         $unsignedAssertion = new Assertion($document->firstChild);
         $unsignedAssertion->setSignatureKey($privateKey);
-        $unsignedAssertion->setCertificates(array(CertificatesMock::PUBLIC_KEY_PEM));
+        $unsignedAssertion->setCertificates([CertificatesMock::PUBLIC_KEY_PEM]);
         $this->assertFalse($unsignedAssertion->getWasSignedAtConstruction());
         $this->assertEquals($privateKey, $unsignedAssertion->getSignatureKey());
 
@@ -496,6 +716,7 @@ XML
         $this->assertTrue($signedAssertion->getWasSignedAtConstruction());
 
     }
+
 
     public function testEptiAttributeValuesAreParsedCorrectly()
     {
@@ -537,14 +758,15 @@ XML;
 
         $this->assertInstanceOf('SAML2\XML\saml\NameID', $maceValue);
         $this->assertInstanceOf('SAML2\XML\saml\NameID', $oidValue);
-        $this->assertEquals('abcd-some-value-xyz', $maceValue->value);
-        $this->assertEquals('abcd-some-value-xyz', $oidValue->value);
-        $this->assertEquals('urn:oasis:names:tc:SAML:2.0:nameid-format:persistent', $maceValue->Format);
-        $this->assertEquals('urn:oasis:names:tc:SAML:2.0:nameid-format:persistent', $oidValue->Format);
+        $this->assertEquals('abcd-some-value-xyz', $maceValue->getValue());
+        $this->assertEquals('abcd-some-value-xyz', $oidValue->getValue());
+        $this->assertEquals('urn:oasis:names:tc:SAML:2.0:nameid-format:persistent', $maceValue->getFormat());
+        $this->assertEquals('urn:oasis:names:tc:SAML:2.0:nameid-format:persistent', $oidValue->getFormat());
         $this->assertXmlStringEqualsXmlString($xml, $assertion->toXML()->ownerDocument->saveXML());
     }
 
-    public function testEptiAttributeValuesMustBeANameID()
+
+    public function testEptiLegacyAttributeValuesCanBeString()
     {
         $xml = <<<XML
             <saml:Assertion
@@ -559,16 +781,10 @@ XML;
       <saml:Conditions/>
       <saml:AttributeStatement>
         <saml:Attribute Name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
-          <saml:AttributeValue>
-            <saml:NameID Format="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent">abcd-some-value-xyz</saml:NameID>
-          </saml:AttributeValue>
+          <saml:AttributeValue xsi:type="xs:string">string</saml:AttributeValue>
         </saml:Attribute>
         <saml:Attribute Name="urn:mace:dir:attribute-def:eduPersonTargetedID" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
-          <saml:AttributeValue>
-            <saml:Attribute Name="urn:some:custom:nested:element">
-              <saml:AttributeValue>abcd-some-value-xyz</saml:AttributeValue>
-            </saml:Attribute>
-          </saml:AttributeValue>
+          <saml:AttributeValue xsi:type="xs:string">string</saml:AttributeValue>
         </saml:Attribute>
         <saml:Attribute Name="urn:EntityConcernedSubID" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
           <saml:AttributeValue xsi:type="xs:string">string</saml:AttributeValue>
@@ -576,14 +792,41 @@ XML;
       </saml:AttributeStatement>
     </saml:Assertion>
 XML;
+        $xml = <<<XML
+            <saml:Assertion
+                    xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+                    xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"
+                    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    Version="2.0"
+                    ID="_93af655219464fb403b34436cfb0c5cb1d9a5502"
+                    IssueInstant="1970-01-01T01:33:31Z">
+      <saml:Issuer>Provider</saml:Issuer>
+      <saml:Conditions/>
+      <saml:AttributeStatement>
+        <saml:Attribute Name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+          <saml:AttributeValue xsi:type="xs:string">string-12</saml:AttributeValue>
+        </saml:Attribute>
+        <saml:Attribute Name="urn:mace:dir:attribute-def:eduPersonTargetedID" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+          <saml:AttributeValue xsi:type="xs:string">string-23</saml:AttributeValue>
+        </saml:Attribute>
+        <saml:Attribute Name="urn:EntityConcernedSubID" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+            <saml:AttributeValue xsi:type="xs:string">string</saml:AttributeValue>
+        </saml:Attribute>
+      </saml:AttributeStatement>
+    </saml:Assertion>
+XML;
 
-        $this->setExpectedException(
-            'SAML2\Exception\RuntimeException',
-            'A "urn:mace:dir:attribute-def:eduPersonTargetedID" (EPTI) attribute value must be a NameID, '
-            . 'none found for value no. "0"'
-        );
-        new Assertion(DOMDocumentFactory::fromString($xml)->firstChild);
+        $assertion = new Assertion(DOMDocumentFactory::fromString($xml)->firstChild);
+        $attributes = $assertion->getAttributes();
+        $maceValue = $attributes['urn:mace:dir:attribute-def:eduPersonTargetedID'][0];
+        $oidValue = $attributes['urn:oid:1.3.6.1.4.1.5923.1.1.1.10'][0];
+        $this->assertInstanceOf('SAML2\XML\saml\NameID', $maceValue);
+        $this->assertInstanceOf('SAML2\XML\saml\NameID', $oidValue);
+        $this->assertEquals('string-23', $maceValue->getValue());
+        $this->assertEquals('string-12', $oidValue->getValue());
     }
+
 
     /**
      * as per http://software.internet2.edu/eduperson/internet2-mace-dir-eduperson-201310.html#eduPersonTargetedID
@@ -628,13 +871,14 @@ XML;
 
         $this->assertInstanceOf('SAML2\XML\saml\NameID', $maceFirstValue);
         $this->assertInstanceOf('SAML2\XML\saml\NameID', $maceSecondValue);
-        $this->assertEquals('abcd-some-value-xyz', $maceFirstValue->value);
-        $this->assertEquals('xyz-some-value-abcd', $maceSecondValue->value);
-        $this->assertEquals('urn:oasis:names:tc:SAML:2.0:nameid-format:persistent', $maceFirstValue->Format);
-        $this->assertEquals('urn:oasis:names:tc:SAML:2.0:nameid-format:persistent', $maceSecondValue->Format);
+        $this->assertEquals('abcd-some-value-xyz', $maceFirstValue->getValue());
+        $this->assertEquals('xyz-some-value-abcd', $maceSecondValue->getValue());
+        $this->assertEquals('urn:oasis:names:tc:SAML:2.0:nameid-format:persistent', $maceFirstValue->getFormat());
+        $this->assertEquals('urn:oasis:names:tc:SAML:2.0:nameid-format:persistent', $maceSecondValue->getFormat());
 
         $this->assertXmlStringEqualsXmlString($xml, $assertion->toXML()->ownerDocument->saveXML());
     }
+
 
     public function testAttributeValuesWithComplexTypesAreParsedCorrectly()
     {
@@ -674,6 +918,7 @@ XML;
         $this->assertXmlStringEqualsXmlString($xml, $assertion->toXML()->ownerDocument->saveXML());
     }
 
+
     public function testTypedAttributeValuesAreParsedCorrectly()
     {
         $xml = <<<XML
@@ -705,6 +950,7 @@ XML;
         $this->assertInternalType('string', $attributes['urn:some:string'][0]);
         $this->assertXmlStringEqualsXmlString($xml, $assertion->toXML()->ownerDocument->saveXML());
     }
+
 
     public function testEncryptedAttributeValuesWithComplexTypeValuesAreParsedCorrectly()
     {
@@ -738,7 +984,7 @@ XML;
 
         $assertion = new Assertion(DOMDocumentFactory::fromString($xml)->firstChild);
         $assertion->setEncryptionKey($privateKey);
-        $assertion->setEncryptedAttributes(true);
+        $assertion->setRequiredEncAttributes(true);
         $this->assertEquals($privateKey, $assertion->getEncryptionKey());
 
         $encryptedAssertion = $assertion->toXML()->ownerDocument->saveXML();
@@ -756,6 +1002,7 @@ XML;
         );
         $this->assertXmlStringEqualsXmlString($xml, $assertionToVerify->toXML()->ownerDocument->saveXML());
     }
+
 
     public function testTypedEncryptedAttributeValuesAreParsedCorrectly()
     {
@@ -785,7 +1032,7 @@ XML;
 
         $assertion = new Assertion(DOMDocumentFactory::fromString($xml)->firstChild);
         $assertion->setEncryptionKey($privateKey);
-        $assertion->setEncryptedAttributes(true);
+        $assertion->setRequiredEncAttributes(true);
         $encryptedAssertion = $assertion->toXML()->ownerDocument->saveXML();
 
         $assertionToVerify = new Assertion(DOMDocumentFactory::fromString($encryptedAssertion)->firstChild);
@@ -800,6 +1047,7 @@ XML;
         $this->assertXmlStringEqualsXmlString($xml, $assertionToVerify->toXML()->ownerDocument->saveXML());
     }
 
+
     /**
      * Try to verify a signed assertion.
      */
@@ -808,7 +1056,7 @@ XML;
         $doc = new \DOMDocument();
         $doc->load(__DIR__ . '/signedassertion.xml');
 
-        $publicKey = CertificatesMock::getPublicKeySha1();
+        $publicKey = CertificatesMock::getPublicKeySha256();
 
         $assertion = new Assertion($doc->firstChild);
         $result = $assertion->validate($publicKey);
@@ -827,6 +1075,26 @@ XML;
         $this->assertTrue($assertion->getWasSignedAtConstruction());
     }
 
+
+    /**
+     * Make sure an assertion whose signature verifies cannot be tampered by using XML comments.
+     * @see https://duo.com/labs/psa/duo-psa-2017-003
+     */
+    public function testCommentsInSignedAssertion()
+    {
+        $doc = new \DOMDocument();
+        $doc->load(__DIR__ . '/signedassertion_with_comments.xml');
+
+        $publicKey = CertificatesMock::getPublicKeySha256();
+
+        $assertion = new Assertion($doc->firstChild);
+        $result = $assertion->validate($publicKey);
+
+        $this->assertTrue($result);
+        $this->assertEquals("_1bbcf227253269d19a689c53cdd542fe2384a9538b", $assertion->getNameId()->getValue());
+    }
+
+
     /**
      * Try to verify a signed assertion in which a byte was changed after signing.
      * Must yield a validation exception.
@@ -836,11 +1104,12 @@ XML;
         $doc = new \DOMDocument();
         $doc->load(__DIR__ . '/signedassertion_tampered.xml');
 
-        $publicKey = CertificatesMock::getPublicKeySha1();
+        $publicKey = CertificatesMock::getPublicKeySha256();
 
         $this->setExpectedException('Exception', 'Reference validation failed');
         $assertion = new Assertion($doc->firstChild);
     }
+
 
     /**
      * Try to verify a signed assertion with the wrong key.
@@ -851,12 +1120,13 @@ XML;
         $doc = new \DOMDocument();
         $doc->load(__DIR__ . '/signedassertion.xml');
 
-        $publicKey = CertificatesMock::getPublicKey2Sha1();
+        $publicKey = CertificatesMock::getPublicKey2Sha256();
 
         $assertion = new Assertion($doc->firstChild);
         $this->setExpectedException('Exception', 'Unable to validate Signature');
         $assertion->validate($publicKey);
     }
+
 
     /**
      * Try to verify an assertion signed with RSA with a DSA public key.
@@ -873,6 +1143,7 @@ XML;
         $this->setExpectedException('Exception', 'Unable to validate Signature');
         $assertion->validate($publicKey);
     }
+
 
     /**
      * Calling validate on an unsigned assertion must return
@@ -908,10 +1179,11 @@ XML;
         // Was not signed
         $this->assertFalse($assertion->getWasSignedAtConstruction());
 
-        $publicKey = CertificatesMock::getPublicKeySha1();
+        $publicKey = CertificatesMock::getPublicKeySha256();
         $result = $assertion->validate($publicKey);
         $this->assertFalse($result);
     }
+
 
     /**
      * An assertion must always be version "2.0".
@@ -945,6 +1217,7 @@ XML;
         $assertion = new Assertion($document->firstChild);
     }
 
+
     /**
      * An assertion without an ID must throw an exception
      */
@@ -976,6 +1249,7 @@ XML;
         $assertion = new Assertion($document->firstChild);
     }
 
+
     /**
      * An assertion must always have an Issuer element.
      */
@@ -1006,6 +1280,7 @@ XML;
         $this->setExpectedException('Exception', 'Missing <saml:Issuer> in assertion');
         $assertion = new Assertion($document->firstChild);
     }
+
 
     /**
      * More than one <saml:Subject> is not allowed in an Assertion.
@@ -1041,6 +1316,7 @@ XML;
         $assertion = new Assertion($document->documentElement);
     }
 
+
     /**
      * No more than one NameID may be present in the Subject
      */
@@ -1073,6 +1349,7 @@ XML;
         $assertion = new Assertion($document->documentElement);
     }
 
+
     /**
      * A <saml:Subject> wtthout both NameID and SubjectConfirmation throws exception.
      */
@@ -1103,6 +1380,7 @@ XML;
         $this->setExpectedException('Exception', 'Missing <saml:SubjectConfirmation> in <saml:Subject>');
         $assertion = new Assertion($document->documentElement);
     }
+
 
     /**
      * An Assertion may not have more than one <saml:Conditions>
@@ -1140,6 +1418,7 @@ XML;
         $assertion = new Assertion($document->firstChild);
     }
 
+
     /**
      * A Condition must be of namespace saml.
      */
@@ -1172,6 +1451,7 @@ XML;
         $this->setExpectedException('Exception', 'Unknown namespace of condition:');
         $assertion = new Assertion($document->firstChild);
     }
+
 
     /**
      * Test various types of allowed Conditions.
@@ -1219,6 +1499,7 @@ XML;
         $this->assertEquals('audience1', $audienceRestrictions[0]);
     }
 
+
     /**
      * Any Condition other than AudienceRestirction, OneTimeUse and
      * ProxyRestriction must throw an Exception.
@@ -1253,6 +1534,7 @@ XML;
         $assertion = new Assertion($document->firstChild);
     }
 
+
     /**
      * More than one AuthnStatement will throw Exception.
      */
@@ -1285,6 +1567,7 @@ XML;
         $assertion = new Assertion($document->firstChild);
     }
 
+
     /**
      * AuthnStatement must have AuthnInstant attribute, if missing
      * throw Exception.
@@ -1311,6 +1594,7 @@ XML;
         $this->setExpectedException('Exception', "Missing required AuthnInstant attribute on <saml:AuthnStatement>");
         $assertion = new Assertion($document->firstChild);
     }
+
 
     /**
      * More than one AuthnContext inside AuthnStatement will throw Exception.
@@ -1342,6 +1626,7 @@ XML;
         $assertion = new Assertion($document->firstChild);
     }
 
+
     /**
      * No AuthnContext inside AuthnStatement will throw Exception.
      */
@@ -1363,6 +1648,7 @@ XML;
         $this->setExpectedException('Exception', "Missing required <saml:AuthnContext> in <saml:AuthnStatement>");
         $assertion = new Assertion($document->firstChild);
     }
+
 
     /**
      * More than one AuthnContextDeclRef inside AuthnContext will throw Exception.
@@ -1390,6 +1676,7 @@ XML;
         $this->setExpectedException('Exception', "More than one <saml:AuthnContextDeclRef> found");
         $assertion = new Assertion($document->firstChild);
     }
+
 
     /**
      * More than one AuthnContextDecl inside AuthnContext will throw Exception.
@@ -1423,6 +1710,7 @@ XML;
         $assertion = new Assertion($document->firstChild);
     }
 
+
     /**
      * More than one AuthnContextClassRef inside AuthnContext will throw Exception.
      */
@@ -1449,6 +1737,7 @@ XML;
         $this->setExpectedException('Exception', "More than one <saml:AuthnContextClassRef> in <saml:AuthnContext>");
         $assertion = new Assertion($document->firstChild);
     }
+
 
     /**
      * When an Attribute element has no name, exception is thrown.
@@ -1477,6 +1766,7 @@ XML
         $this->setExpectedException('Exception', "Missing name on <saml:Attribute> element");
         $assertion = new Assertion($document->firstChild);
     }
+
 
     /**
      * If this assertion mixes Attribute NameFormats, the AttributeNameFormat
@@ -1512,6 +1802,7 @@ XML;
         $this->assertEquals('urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified', $nameFormat);
     }
 
+
     /**
      * Test basic NameID unmarshalling.
      */
@@ -1542,17 +1833,18 @@ XML;
         $assertion = new Assertion($document->documentElement);
 
         $nameID = $assertion->getNameID();
-        $this->assertEquals('b7de81420a19416', $nameID->value);
-        $this->assertEquals('urn:oasis:names:tc:SAML:2.0:nameid-format:transient', $nameID->Format);
+        $this->assertEquals('b7de81420a19416', $nameID->getValue());
+        $this->assertEquals('urn:oasis:names:tc:SAML:2.0:nameid-format:transient', $nameID->getFormat());
         $this->assertFalse($assertion->isNameIdEncrypted());
 
         // Not encrypted, should be a no-op
         $privateKey = CertificatesMock::getPrivateKey();
         $decrypted = $assertion->decryptNameId($privateKey);
-        $this->assertEquals('b7de81420a19416', $nameID->value);
-        $this->assertEquals('urn:oasis:names:tc:SAML:2.0:nameid-format:transient', $nameID->Format);
+        $this->assertEquals('b7de81420a19416', $nameID->getValue());
+        $this->assertEquals('urn:oasis:names:tc:SAML:2.0:nameid-format:transient', $nameID->getFormat());
         $this->assertFalse($assertion->isNameIdEncrypted());
     }
+
 
     /**
      * Test NameID Encryption and Decryption.
@@ -1562,12 +1854,13 @@ XML;
         // Create an assertion
         $assertion = new Assertion();
         $assertion->setIssuer('testIssuer');
-        $assertion->setValidAudiences(array('audience1', 'audience2'));
+        $assertion->setValidAudiences(['audience1', 'audience2']);
         $assertion->setAuthnContext('someAuthnContext');
 
-        $assertion->setNameId(array(
+        $assertion->setNameId([
             "Value" => "just_a_basic_identifier",
-            "Format" => "urn:oasis:names:tc:SAML:2.0:nameid-format:transient"));
+            "Format" => "urn:oasis:names:tc:SAML:2.0:nameid-format:transient"
+        ]);
         $this->assertFalse($assertion->isNameIdEncrypted());
 
         $publicKey = CertificatesMock::getPublicKey();
@@ -1584,9 +1877,10 @@ XML;
         $assertionToVerify->decryptNameId($privateKey);
         $this->assertFalse($assertionToVerify->isNameIdEncrypted());
         $nameID = $assertionToVerify->getNameID();
-        $this->assertEquals('just_a_basic_identifier', $nameID->value);
-        $this->assertEquals('urn:oasis:names:tc:SAML:2.0:nameid-format:transient', $nameID->Format);
+        $this->assertEquals('just_a_basic_identifier', $nameID->getValue());
+        $this->assertEquals('urn:oasis:names:tc:SAML:2.0:nameid-format:transient', $nameID->getFormat());
     }
+
 
     /**
      * Test Exception when trying to get encrypted NameId without
@@ -1624,5 +1918,82 @@ XML;
         $assertion = new Assertion($document->documentElement);
         $this->setExpectedException('Exception', "Attempted to retrieve encrypted NameID without decrypting it first");
         $assertion->getNameID();
+    }
+
+
+    public function testMarshallingElementOrdering()
+    {
+        // Create an assertion
+        $assertion = new Assertion();
+        $assertion->setIssuer('testIssuer');
+        $assertion->setAttributes([
+            "name1" => ["value1","value2"],
+            "name2" => ["value3"],
+        ]);
+        $assertion->setAttributeNameFormat("urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified");
+        $assertion->setSignatureKey(CertificatesMock::getPrivateKey());
+        $assertion->setNameId([
+            "Value" => "just_a_basic_identifier",
+            "Format" => "urn:oasis:names:tc:SAML:2.0:nameid-format:transient"]);
+        $assertion->setAuthnContext('someAuthnContext');
+
+        // Marshall it to a \DOMElement
+        $assertionElement = $assertion->toXML();
+
+        // Test for an Issuer
+        $issuerElements = Utils::xpQuery($assertionElement, './saml_assertion:Issuer');
+        $this->assertCount(1, $issuerElements);
+        $this->assertEquals('testIssuer', $issuerElements[0]->textContent);
+        // Test ordering of Assertion contents
+        $assertionElements = Utils::xpQuery($assertionElement, './saml_assertion:Issuer/following-sibling::*');
+        $this->assertCount(5, $assertionElements);
+        $this->assertEquals('ds:Signature', $assertionElements[0]->tagName);
+        $this->assertEquals('saml:Subject', $assertionElements[1]->tagName);
+        $this->assertEquals('saml:Conditions', $assertionElements[2]->tagName);
+        $this->assertEquals('saml:AuthnStatement', $assertionElements[3]->tagName);
+        $this->assertEquals('saml:AttributeStatement', $assertionElements[4]->tagName);
+    }
+
+
+    /**
+     * Test attribute value empty string and null.
+     * Ensure that empty string attribues are output, and null attributes also but
+     * with different type.
+     */
+    public function testAttributeValueEmptyStringAndNull()
+    {
+        // Create an assertion
+        $assertion = new Assertion();
+
+        $assertion->setIssuer('testIssuer');
+
+        $assertion->setAttributes([
+            "name1" => ["value1", "value2"],
+            "name2" => ["value3", ""],
+            "name3" => ["value1", null, "value5"],
+        ]);
+
+        $assertionElement = $assertion->toXML();
+        $assertionElements = Utils::xpQuery($assertionElement, './saml_assertion:AttributeStatement/saml_assertion:Attribute');
+
+        $this->assertCount(3, $assertionElements);
+
+        $this->assertEquals(2, $assertionElements[1]->childNodes->length);
+        // empty string should be empty string with type string
+        $this->assertEquals('', $assertionElements[1]->childNodes->item(1)->nodeValue);
+        $this->assertEquals(1, $assertionElements[1]->childNodes->item(1)->attributes->length);
+        $this->assertEquals('xsi:type', $assertionElements[1]->childNodes->item(1)->attributes->item(0)->nodeName);
+        $this->assertEquals('xs:string', $assertionElements[1]->childNodes->item(1)->attributes->item(0)->value);
+
+        $this->assertEquals(3, $assertionElements[2]->childNodes->length);
+        // null value should be empty attribute with nil attribute set to true
+        $this->assertEquals('', $assertionElements[2]->childNodes->item(1)->nodeValue);
+        $this->assertEquals(1, $assertionElements[2]->childNodes->item(1)->attributes->length);
+        $this->assertEquals('xsi:nil', $assertionElements[2]->childNodes->item(1)->attributes->item(0)->nodeName);
+        $this->assertEquals('true', $assertionElements[2]->childNodes->item(1)->attributes->item(0)->value);
+        // double check that 'normal' string attribute is still correct
+        $this->assertEquals('value5', $assertionElements[2]->childNodes->item(2)->nodeValue);
+        $this->assertEquals('xsi:type', $assertionElements[2]->childNodes->item(2)->attributes->item(0)->nodeName);
+        $this->assertEquals('xs:string', $assertionElements[2]->childNodes->item(2)->attributes->item(0)->value);
     }
 }

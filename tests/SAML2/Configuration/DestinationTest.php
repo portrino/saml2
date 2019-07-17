@@ -16,6 +16,7 @@ class DestinationTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($destinationOne->equals($destinationTwo));
     }
 
+
     /**
      * @group configuration
      * @test
@@ -28,6 +29,7 @@ class DestinationTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($destinationOne->equals($destinationTwo));
     }
 
+
     /**
      * @group configuration
      * @test
@@ -39,17 +41,18 @@ class DestinationTest extends \PHPUnit_Framework_TestCase
         $destination = new Destination($value);
     }
 
+
     /**
      * data-provider for a_destination_cannot_be_created_with_a_non_string_value
      */
     public function nonStringValueProvider()
     {
-        return array(
-            'array'  => array(array()),
-            'object' => array(new \StdClass()),
-            'int'    => array(1),
-            'float'  => array(1.2323),
-            'bool'   => array(false)
-        );
+        return [
+            'array'  => [[]],
+            'object' => [new \StdClass()],
+            'int'    => [1],
+            'float'  => [1.2323],
+            'bool'   => [false]
+        ];
     }
 }

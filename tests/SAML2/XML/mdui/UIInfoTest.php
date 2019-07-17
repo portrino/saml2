@@ -15,11 +15,18 @@ class UIInfoTest extends \PHPUnit_Framework_TestCase
      */
     public function testMarshalling()
     {
+        $logo = new Logo();
+        $logo->setLanguage("nl");
+        $logo->setWidth(30);
+        $logo->setHeight(20);
+        $logo->setUrl("https://example.edu/logo.png");
+
         $uiinfo = new UIInfo();
-        $uiinfo->DisplayName = array("nl" => "Voorbeeld", "en" => "Example");
-        $uiinfo->Description = array("nl" => "Omschrijving", "en" => "Description");
-        $uiinfo->InformationURL = array("nl" => "https://voorbeeld.nl/", "en" => "https://example.org");
-        $uiinfo->PrivacyStatementURL = array("nl" => "https://voorbeeld.nl/privacy", "en" => "https://example.org/privacy");
+        $uiinfo->setDisplayName(["nl" => "Voorbeeld", "en" => "Example"]);
+        $uiinfo->setDescription(["nl" => "Omschrijving", "en" => "Description"]);
+        $uiinfo->setInformationURL(["nl" => "https://voorbeeld.nl/", "en" => "https://example.org"]);
+        $uiinfo->setPrivacyStatementURL(["nl" => "https://voorbeeld.nl/privacy", "en" => "https://example.org/privacy"]);
+        $uiinfo->setLogo([$logo]);
 
         $document = DOMDocumentFactory::fromString('<root />');
         $xml = $uiinfo->toXML($document->firstChild);
@@ -72,28 +79,29 @@ class UIInfoTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("en", $privurlElements[1]->getAttribute("xml:lang"));
     }
 
+
     /**
      * Test creating an UIinfo element with XML children
      */
     public function testMarshallingChildren()
     {
         $keywords = new Keywords();
-        $keywords->lang = "nl";
-        $keywords->Keywords = array("voorbeeld", "specimen");
+        $keywords->setLanguage("nl");
+        $keywords->setKeywords(["voorbeeld", "specimen"]);
         $logo = new Logo();
-        $logo->lang = "nl";
-        $logo->width = 30;
-        $logo->height = 20;
-        $logo->url = "https://example.edu/logo.png";
+        $logo->setLanguage("nl");
+        $logo->setWidth(30);
+        $logo->setHeight(20);
+        $logo->setUrl("https://example.edu/logo.png");
         $discohints = new DiscoHints();
-        $discohints->IPHint = array("192.168.6.0/24", "fd00:0123:aa:1001::/64");
+        $discohints->setIPHint(["192.168.6.0/24", "fd00:0123:aa:1001::/64"]);
         // keywords appears twice, direcyly under UIinfo and as child of DiscoHints
-        $discohints->children = array($keywords);
+        $discohints->setChildren([$keywords]);
 
         $uiinfo = new UIInfo();
-        $uiinfo->Logo = array($logo);
-        $uiinfo->Keywords = array($keywords);
-        $uiinfo->children = array($discohints);
+        $uiinfo->setLogo([$logo]);
+        $uiinfo->setKeywords([$keywords]);
+        $uiinfo->setChildren([$discohints]);
 
         $document = DOMDocumentFactory::fromString('<root />');
         $xml = $uiinfo->toXML($document->firstChild);
@@ -144,6 +152,7 @@ class UIInfoTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("nl", $keywordElements[0]->getAttribute("xml:lang"));
     }
 
+
     /**
      * Test unmarshalling a basic UIInfo element
      */
@@ -163,17 +172,18 @@ XML
 
         $uiinfo = new UIInfo($document->firstChild);
 
-        $this->assertCount(2, $uiinfo->DisplayName);
-        $this->assertEquals('University of Examples', $uiinfo->DisplayName['en']);
-        $this->assertEquals('Univërsitä øf Exåmpleß', $uiinfo->DisplayName['el']);
-        $this->assertCount(2, $uiinfo->InformationURL);
-        $this->assertEquals('http://www.example.edu/en/', $uiinfo->InformationURL['en']);
-        $this->assertEquals('http://www.example.edu/', $uiinfo->InformationURL['el']);
-        $this->assertCount(1, $uiinfo->PrivacyStatementURL);
-        $this->assertEquals('https://example.org/privacy', $uiinfo->PrivacyStatementURL['en']);
-        $this->assertCount(1, $uiinfo->Description);
-        $this->assertEquals('Just an example', $uiinfo->Description['en']);
+        $this->assertCount(2, $uiinfo->getDisplayName());
+        $this->assertEquals('University of Examples', $uiinfo->getDisplayName()['en']);
+        $this->assertEquals('Univërsitä øf Exåmpleß', $uiinfo->getDisplayName()['el']);
+        $this->assertCount(2, $uiinfo->getInformationURL());
+        $this->assertEquals('http://www.example.edu/en/', $uiinfo->getInformationURL()['en']);
+        $this->assertEquals('http://www.example.edu/', $uiinfo->getInformationURL()['el']);
+        $this->assertCount(1, $uiinfo->getPrivacyStatementURL());
+        $this->assertEquals('https://example.org/privacy', $uiinfo->getPrivacyStatementURL()['en']);
+        $this->assertCount(1, $uiinfo->getDescription());
+        $this->assertEquals('Just an example', $uiinfo->getDescription()['en']);
     }
+
 
     /**
      * Test unmarshalling wuth Logo, Keywords child elements
@@ -194,17 +204,17 @@ XML
 
         $uiinfo = new UIInfo($document->firstChild);
 
-        $this->assertCount(1, $uiinfo->DisplayName);
-        $this->assertEquals('University of Examples', $uiinfo->DisplayName['en']);
-        $this->assertCount(1, $uiinfo->Logo);
-        $this->assertEquals('https://example.org/idp/images/logo_87x88.png', $uiinfo->Logo[0]->url);
-        $this->assertEquals(87, $uiinfo->Logo[0]->width);
-        $this->assertEquals(88, $uiinfo->Logo[0]->height);
-        $this->assertEquals("fy", $uiinfo->Logo[0]->lang);
-        $this->assertCount(2, $uiinfo->Keywords);
-        $this->assertEquals('Fictional', $uiinfo->Keywords[0]->Keywords[1]);
-        $this->assertEquals('fr', $uiinfo->Keywords[1]->lang);
-        $this->assertCount(2, $uiinfo->children);
-        $this->assertEquals('child2', $uiinfo->children[1]->localName);
+        $this->assertCount(1, $uiinfo->getDisplayName());
+        $this->assertEquals('University of Examples', $uiinfo->getDisplayName()['en']);
+        $this->assertCount(1, $uiinfo->getLogo());
+        $this->assertEquals('https://example.org/idp/images/logo_87x88.png', $uiinfo->getLogo()[0]->getUrl());
+        $this->assertEquals(87, $uiinfo->getLogo()[0]->getWidth());
+        $this->assertEquals(88, $uiinfo->getLogo()[0]->getHeight());
+        $this->assertEquals("fy", $uiinfo->getLogo()[0]->getLanguage());
+        $this->assertCount(2, $uiinfo->getKeywords());
+        $this->assertEquals('Fictional', $uiinfo->getKeywords()[0]->getKeywords()[1]);
+        $this->assertEquals('fr', $uiinfo->getKeywords()[1]->getLanguage());
+        $this->assertCount(2, $uiinfo->getChildren());
+        $this->assertEquals('child2', $uiinfo->getChildren()[1]->localName);
     }
 }

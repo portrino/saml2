@@ -23,14 +23,16 @@ class SubjectConfirmationResponseToMatchesTest extends
      */
     private $response;
 
+
     public function setUp()
     {
         parent::setUp();
-        $this->subjectConfirmation                          = m::mock('SAML2\XML\saml\SubjectConfirmation');
-        $this->subjectConfirmationData                      = m::mock('SAML2\XML\saml\SubjectConfirmationData');
+        $this->subjectConfirmation = new \SAML2\XML\saml\SubjectConfirmation();
+        $this->subjectConfirmationData = new \SAML2\XML\saml\SubjectConfirmationData();
         $this->subjectConfirmation->SubjectConfirmationData = $this->subjectConfirmationData;
-        $this->response                                     = m::mock('SAML2\Response');
+        $this->response = m::mock('SAML2\Response');
     }
+
 
     /**
      * @group assertion-validation
@@ -39,7 +41,7 @@ class SubjectConfirmationResponseToMatchesTest extends
     public function when_the_response_responseto_is_null_the_subject_confirmation_is_valid()
     {
         $this->response->shouldReceive('getInResponseTo')->andReturnNull();
-        $this->subjectConfirmationData->InResponseTo = 'someValue';
+        $this->subjectConfirmationData->setInResponseTo('someValue');
 
         $validator = new SubjectConfirmationResponseToMatches(
             $this->response
@@ -50,6 +52,7 @@ class SubjectConfirmationResponseToMatchesTest extends
 
         $this->assertTrue($result->isValid());
     }
+
 
     /**
      * @group assertion-validation
@@ -58,7 +61,7 @@ class SubjectConfirmationResponseToMatchesTest extends
     public function when_the_subjectconfirmation_responseto_is_null_the_subjectconfirmation_is_valid()
     {
         $this->response->shouldReceive('getInResponseTo')->andReturn('someValue');
-        $this->subjectConfirmationData->InResponseTo = null;
+        $this->subjectConfirmationData->setInResponseTo(null);
 
         $validator = new SubjectConfirmationResponseToMatches(
             $this->response
@@ -69,6 +72,7 @@ class SubjectConfirmationResponseToMatchesTest extends
 
         $this->assertTrue($result->isValid());
     }
+
 
     /**
      * @group assertion-validation
@@ -77,7 +81,7 @@ class SubjectConfirmationResponseToMatchesTest extends
     public function when_the_subjectconfirmation_and_response_responseto_are_null_the_subjectconfirmation_is_valid()
     {
         $this->response->shouldReceive('getInResponseTo')->andReturnNull();
-        $this->subjectConfirmationData->InResponseTo = null;
+        $this->subjectConfirmationData->setInResponseTo(null);
 
         $validator = new SubjectConfirmationResponseToMatches(
             $this->response
@@ -88,6 +92,7 @@ class SubjectConfirmationResponseToMatchesTest extends
 
         $this->assertTrue($result->isValid());
     }
+
 
     /**
      * @group assertion-validation
@@ -96,7 +101,7 @@ class SubjectConfirmationResponseToMatchesTest extends
     public function when_the_subjectconfirmation_and_response_responseto_are_equal_the_subjectconfirmation_is_valid()
     {
         $this->response->shouldReceive('getInResponseTo')->andReturn('theSameValue');
-        $this->subjectConfirmationData->InResponseTo = 'theSameValue';
+        $this->subjectConfirmationData->setInResponseTo('theSameValue');
 
         $validator = new SubjectConfirmationResponseToMatches(
             $this->response
@@ -108,6 +113,7 @@ class SubjectConfirmationResponseToMatchesTest extends
         $this->assertTrue($result->isValid());
     }
 
+
     /**
      * @group assertion-validation
      * @test
@@ -115,7 +121,7 @@ class SubjectConfirmationResponseToMatchesTest extends
     public function when_the_subjectconfirmation_and_response_responseto_differ_the_subjectconfirmation_is_invalid()
     {
         $this->response->shouldReceive('getInResponseTo')->andReturn('someValue');
-        $this->subjectConfirmationData->InResponseTo = 'anotherValue';
+        $this->subjectConfirmationData->setInResponseTo('anotherValue');
 
         $validator = new SubjectConfirmationResponseToMatches(
             $this->response

@@ -13,12 +13,12 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
     public function testXpQuery()
     {
         $aq = new AttributeQuery();
-        $aq->setNameID(array(
+        $aq->setNameID([
             'Value' => 'NameIDValue',
             'Format' => 'SomeNameIDFormat',
             'NameQualifier' => 'OurNameQualifier',
             'SPNameQualifier' => 'TheSPNameQualifier',
-        ));
+        ]);
 
         $xml = $aq->toUnsignedXML();
 
@@ -29,6 +29,7 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('TheSPNameQualifier', $nameID[0]->getAttribute("SPNameQualifier"));
         $this->assertEquals('NameIDValue', $nameID[0]->textContent);
     }
+
 
     /**
      * Test adding an element with a string value.
@@ -61,6 +62,7 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+
     /**
      * Test adding multiple elements of a given type with given values.
      */
@@ -72,7 +74,7 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
             'testns',
             'ns:somenode',
             false,
-            array('value1', 'value2')
+            ['value1', 'value2']
         );
         $this->assertEquals(
             '<root>'.
@@ -88,7 +90,7 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
             'testns',
             'ns:somenode',
             false,
-            array('value1', 'value2')
+            ['value1', 'value2']
         );
         $this->assertEquals(
             '<ns:root xmlns:ns="testns">'.
@@ -104,7 +106,7 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
             'testns',
             'ns:somenode',
             true,
-            array('en' => 'value (en)', 'no' => 'value (no)')
+            ['en' => 'value (en)', 'no' => 'value (no)']
         );
         $this->assertEquals(
             '<root>'.
@@ -120,7 +122,7 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
             'testns',
             'ns:somenode',
             true,
-            array('en' => 'value (en)', 'no' => 'value (no)')
+            ['en' => 'value (en)', 'no' => 'value (no)']
         );
         $this->assertEquals(
             '<ns:root xmlns:ns="testns">'.
@@ -130,6 +132,7 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
             $document->saveXML($document->firstChild)
         );
     }
+
 
     /**
      * Test retrieval of a string value for a given node.
@@ -154,6 +157,7 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('value2', $stringValues[1]);
     }
 
+
     /**
      * Test retrieval of a localized string for a given node.
      */
@@ -177,6 +181,7 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('value (no)', $localizedStringValues["no"]);
     }
 
+
     /**
      * Test xsDateTime format validity
      *
@@ -193,19 +198,26 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
         }
     }
 
+
     public function xsDateTimes()
     {
-        return array(
-            array(true, '2015-01-01T00:00:00Z', 1420070400),
-            array(true, '2015-01-01T00:00:00.0Z', 1420070400),
-            array(true, '2015-01-01T00:00:00.1Z', 1420070400),
-            array(false, '2015-01-01T00:00:00', 1420070400),
-            array(false, '2015-01-01T00:00:00.0', 1420070400),
-            array(false, 'junk'),
-            array(false, '2015-01-01T00:00:00-04:00'),
-            array(false, '2015-01-01T00:00:00.0-04:00'),
-        );
+        return [
+            [true, '2015-01-01T00:00:00Z', 1420070400],
+            [true, '2015-01-01T00:00:00.0Z', 1420070400],
+            [true, '2015-01-01T00:00:00.1Z', 1420070400],
+            [true, '2015-01-01T00:00:00.321Z', 1420070400],
+            [true, '2015-01-01T00:00:00.587Z', 1420070400],
+            [true, '2015-01-01T00:00:00.123456Z', 1420070400],
+            [true, '2015-01-01T00:00:00.1234567Z', 1420070400],
+            [false, '2015-01-01T00:00:00', 1420070400],
+            [false, '2015-01-01T00:00:00.0', 1420070400],
+            [false, 'junk'],
+            [false, '2015-01-01T00:00:00-04:00'],
+            [false, '2015-01-01T00:00:00.0-04:00'],
+            [false, '2015-01-01T00:00:00.123456Z789012345', 1420070400],
+        ];
     }
+
 
     /**
      * Test parseBoolean, XML allows both 1 and true as values.
@@ -267,4 +279,15 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
         $result = Utils::parseBoolean($document->firstChild, 'anattribute' );
     }
 
+
+    /**
+     * Test createKeyDescriptor.
+     */
+    public function testCreateKeyDescriptor()
+    {
+        $X509Data = "MIICgTCCAeoCCQCbOlrWDdX7FTANBgkqhkiG9w0BAQUFADCBhDELMAkGA1UEBhMCTk8xGDAWBgNVBAgTD0FuZHJlYXMgU29sYmVyZzEMMAoGA1UEBxMDRm9vMRAwDgYDVQQKEwdVTklORVRUMRgwFgYDVQQDEw9mZWlkZS5lcmxhbmcubm8xITAfBgkqhkiG9w0BCQEWEmFuZHJlYXNAdW5pbmV0dC5ubzAeFw0wNzA2MTUxMjAxMzVaFw0wNzA4MTQxMjAxMzVaMIGEMQswCQYDVQQGEwJOTzEYMBYGA1UECBMPQW5kcmVhcyBTb2xiZXJnMQwwCgYDVQQHEwNGb28xEDAOBgNVBAoTB1VOSU5FVFQxGDAWBgNVBAMTD2ZlaWRlLmVybGFuZy5ubzEhMB8GCSqGSIb3DQEJARYSYW5kcmVhc0B1bmluZXR0Lm5vMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDivbhR7P516x/S3BqKxupQe0LONoliupiBOesCO3SHbDrl3+q9IbfnfmE04rNuMcPsIxB161TdDpIesLCn7c8aPHISKOtPlAeTZSnb8QAu7aRjZq3+PbrP5uW3TcfCGPtKTytHOge/OlJbo078dVhXQ14d1EDwXJW1rRXuUt4C8QIDAQABMA0GCSqGSIb3DQEBBQUAA4GBACDVfp86HObqY+e8BUoWQ9+VMQx1ASDohBjwOsg2WykUqRXF+dLfcUH9dWR63CtZIKFDbStNomPnQz7nbK+onygwBspVEbnHuUihZq3ZUdmumQqCw4Uvs/1Uvq3orOo/WJVhTyvLgFVK2QarQ4/67OZfHd7R+POBXhophSMv1ZOo";
+        $keyDescriptor = Utils::createKeyDescriptor($X509Data);
+
+        $this->assertInstanceOf('\SAML2\XML\ds\X509Data', $keyDescriptor->KeyInfo->getInfo()[0]);
+    }
 }

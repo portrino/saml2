@@ -12,10 +12,12 @@ class ValidatorChainTest extends \PHPUnit_Framework_TestCase
      */
     private $chain;
 
+
     public function setUp()
     {
-        $this->chain = new ValidatorChain(new \Psr\Log\NullLogger(), array());
+        $this->chain = new ValidatorChain(new \Psr\Log\NullLogger(), []);
     }
+
 
     /**
      * @group signature
@@ -28,8 +30,9 @@ class ValidatorChainTest extends \PHPUnit_Framework_TestCase
         $this->chain->appendValidator(new MockChainedValidator(false, true));
         $this->chain->appendValidator(new MockChainedValidator(false, true));
 
-        $this->chain->hasValidSignature(new Response(), new IdentityProvider(array()));
+        $this->chain->hasValidSignature(new Response(), new IdentityProvider([]));
     }
+
 
     /**
      * @group signature
@@ -44,10 +47,11 @@ class ValidatorChainTest extends \PHPUnit_Framework_TestCase
 
         $validationResult = $this->chain->hasValidSignature(
             new Response(),
-            new IdentityProvider(array())
+            new IdentityProvider([])
         );
         $this->assertFalse($validationResult, 'The validation result is not what is expected');
     }
+
 
     /**
      * @group signature
@@ -62,7 +66,7 @@ class ValidatorChainTest extends \PHPUnit_Framework_TestCase
 
         $validationResult = $this->chain->hasValidSignature(
             new Response(),
-            new IdentityProvider(array())
+            new IdentityProvider([])
         );
         $this->assertFalse($validationResult, 'The validation result is not what is expected');
     }

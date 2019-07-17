@@ -16,8 +16,8 @@ class AdditionalMetadataLocationTest extends \PHPUnit_Framework_TestCase
         $document = DOMDocumentFactory::fromString('<root/>');
 
         $additionalMetadataLocation = new AdditionalMetadataLocation();
-        $additionalMetadataLocation->namespace = 'NamespaceAttribute';
-        $additionalMetadataLocation->location = 'TheLocation';
+        $additionalMetadataLocation->setNamespace('NamespaceAttribute');
+        $additionalMetadataLocation->setLocation('TheLocation');
         $additionalMetadataLocationElement = $additionalMetadataLocation->toXML($document->firstChild);
 
         $additionalMetadataLocationElements = Utils::xpQuery(
@@ -31,6 +31,7 @@ class AdditionalMetadataLocationTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('NamespaceAttribute', $additionalMetadataLocationElement->getAttribute("namespace"));
     }
 
+
     public function testUnmarshalling()
     {
         $document = DOMDocumentFactory::fromString(
@@ -38,8 +39,8 @@ class AdditionalMetadataLocationTest extends \PHPUnit_Framework_TestCase
             ' namespace="TheNamespaceAttribute">LocationText</md:AdditionalMetadataLocation>'
         );
         $additionalMetadataLocation = new AdditionalMetadataLocation($document->firstChild);
-        $this->assertEquals('TheNamespaceAttribute', $additionalMetadataLocation->namespace);
-        $this->assertEquals('LocationText', $additionalMetadataLocation->location);
+        $this->assertEquals('TheNamespaceAttribute', $additionalMetadataLocation->getNamespace());
+        $this->assertEquals('LocationText', $additionalMetadataLocation->getLocation());
 
         $document->loadXML(
             '<md:AdditionalMetadataLocation xmlns:md="' . Constants::NS_MD . '"'.

@@ -24,6 +24,7 @@ XML
         new EntityDescriptor($document->firstChild);
     }
 
+
     public function testMissingEntityId()
     {
         $document = DOMDocumentFactory::fromString(
@@ -39,6 +40,7 @@ XML
         new EntityDescriptor($document->firstChild);
     }
 
+
     public function testMissingAffiliateMember()
     {
         $document = DOMDocumentFactory::fromString(
@@ -53,6 +55,7 @@ XML
         new EntityDescriptor($document->firstChild);
     }
 
+
     public function testMissingDescriptor()
     {
         $document = DOMDocumentFactory::fromString(
@@ -64,6 +67,7 @@ XML
         $this->setExpectedException('Exception', 'Must have either one of the RoleDescriptors or an AffiliationDescriptor in EntityDescriptor.');
         new EntityDescriptor($document->firstChild);
     }
+
 
     public function testInvalidValidUntil()
     {
@@ -80,6 +84,7 @@ XML
         new EntityDescriptor($document->firstChild);
     }
 
+
     public function testUnmarshalling()
     {
         $document = DOMDocumentFactory::fromString(
@@ -95,20 +100,23 @@ XML
         $entityDescriptor = new EntityDescriptor($document->firstChild);
 
         $this->assertTrue($entityDescriptor instanceof EntityDescriptor);
-        $this->assertEquals('theEntityID', $entityDescriptor->entityID);
+        $this->assertEquals('theEntityID', $entityDescriptor->getEntityID());
 
-        $this->assertTrue(empty($entityDescriptor->RoleDescriptor));
+        $roleDescriptor = $entityDescriptor->getRoleDescriptor();
+        $this->assertTrue(empty($roleDescriptor));
 
-        $affiliationDescriptor = $entityDescriptor->AffiliationDescriptor;
+        $affiliationDescriptor = $entityDescriptor->getAffiliationDescriptor();
         $this->assertTrue($affiliationDescriptor instanceof AffiliationDescriptor);
-        $this->assertEquals('asdf', $affiliationDescriptor->affiliationOwnerID);
-        $this->assertEquals('theAffiliationDescriptorID', $affiliationDescriptor->ID);
-        $this->assertEquals(1265027696, $affiliationDescriptor->validUntil);
-        $this->assertEquals('PT9000S', $affiliationDescriptor->cacheDuration);
-        $this->assertCount(2, $affiliationDescriptor->AffiliateMember);
-        $this->assertEquals('test', $affiliationDescriptor->AffiliateMember[0]);
-        $this->assertEquals('test2', $affiliationDescriptor->AffiliateMember[1]);
+        $this->assertEquals('asdf', $affiliationDescriptor->getAffiliationOwnerID());
+        $this->assertEquals('theAffiliationDescriptorID', $affiliationDescriptor->getID());
+        $this->assertEquals(1265027696, $affiliationDescriptor->getValidUntil());
+        $this->assertEquals('PT9000S', $affiliationDescriptor->getCacheDuration());
+        $affiliateMember = $affiliationDescriptor->getAffiliateMember();
+        $this->assertCount(2, $affiliateMember);
+        $this->assertEquals('test', $affiliateMember[0]);
+        $this->assertEquals('test2', $affiliateMember[1]);
     }
+
 
     public function testUnmarshalling2()
     {
@@ -133,15 +141,16 @@ XML
         $entityDescriptor = new EntityDescriptor($document->firstChild);
 
         $this->assertTrue($entityDescriptor instanceof EntityDescriptor);
-        $this->assertEquals('theEntityID', $entityDescriptor->entityID);
-        $this->assertEquals('theID', $entityDescriptor->ID);
-        $this->assertEquals(1262349296, $entityDescriptor->validUntil);
-        $this->assertEquals('PT5000S', $entityDescriptor->cacheDuration);
+        $this->assertEquals('theEntityID', $entityDescriptor->getEntityID());
+        $this->assertEquals('theID', $entityDescriptor->getID());
+        $this->assertEquals(1262349296, $entityDescriptor->getValidUntil());
+        $this->assertEquals('PT5000S', $entityDescriptor->getCacheDuration());
 
-        $this->assertCount(1, $entityDescriptor->RoleDescriptor);
-        $this->assertTrue($entityDescriptor->RoleDescriptor[0] instanceof AttributeAuthorityDescriptor);
+        $roleDescriptor = $entityDescriptor->getRoleDescriptor();
+        $this->assertCount(1, $roleDescriptor);
+        $this->assertTrue($roleDescriptor[0] instanceof AttributeAuthorityDescriptor);
 
-        $o = $entityDescriptor->Organization;
+        $o = $entityDescriptor->getOrganization();
         $this->assertTrue($o instanceof Organization);
         $this->assertCount(2, $o->OrganizationName);
         $this->assertEquals('orgNameTest (no)', $o->OrganizationName["no"]);

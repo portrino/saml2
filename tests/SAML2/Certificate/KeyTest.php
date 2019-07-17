@@ -12,21 +12,23 @@ class KeyTest extends \PHPUnit_Framework_TestCase
      */
     public function invalid_key_usage_should_throw_an_exception()
     {
-        $key = new Key(array(Key::USAGE_SIGNING => true));
+        $key = new Key([Key::USAGE_SIGNING => true]);
 
         $key->canBeUsedFor('foo');
     }
 
+
     /**
      * @group certificate
-     *
+     * @dataProvider functionProvider
      * @test
      * @expectedException \SAML2\Exception\InvalidArgumentException
      */
-    public function invalid_offset_type_should_throw_an_exception()
+    public function invalid_offset_type_should_throw_an_exception($function, $params)
     {
-        $key = new Key(array(Key::USAGE_SIGNING => true));
-        $key->offsetGet(0);
+        $key = new Key([Key::USAGE_SIGNING => true]);
+        $this->setExpectedException('\SAML2\Exception\InvalidArgumentException');
+        call_user_func_array([$key, $function], $params);
     }
 
 
@@ -37,7 +39,7 @@ class KeyTest extends \PHPUnit_Framework_TestCase
      */
     public function assert_that_key_usage_check_works_correctly()
     {
-        $key = new Key(array(Key::USAGE_SIGNING => true));
+        $key = new Key([Key::USAGE_SIGNING => true]);
 
         $this->assertTrue($key->canBeUsedFor(Key::USAGE_SIGNING));
         $this->assertFalse($key->canBeUsedFor(Key::USAGE_ENCRYPTION));
@@ -46,6 +48,7 @@ class KeyTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($key->canBeUsedFor(Key::USAGE_ENCRYPTION));
     }
 
+
     /**
      * @group certificate
      *
@@ -53,9 +56,10 @@ class KeyTest extends \PHPUnit_Framework_TestCase
      */
     public function assert_that_offsetget_works_correctly()
     {
-        $key = new Key(array(Key::USAGE_SIGNING => true));
+        $key = new Key([Key::USAGE_SIGNING => true]);
         $this->assertTrue($key->offsetGet(Key::USAGE_SIGNING));
     }
+
 
     /**
      * @group certificate
@@ -64,7 +68,7 @@ class KeyTest extends \PHPUnit_Framework_TestCase
      */
     public function assert_that_offsetunset_unsets_offset()
     {
-        $key = new Key(array(Key::USAGE_SIGNING => true, Key::USAGE_ENCRYPTION => true));
+        $key = new Key([Key::USAGE_SIGNING => true, Key::USAGE_ENCRYPTION => true]);
         $this->assertTrue($key->offsetExists(Key::USAGE_SIGNING));
         $this->assertTrue($key->offsetExists(Key::USAGE_ENCRYPTION));
         $key->offsetUnset(Key::USAGE_SIGNING);
@@ -73,5 +77,16 @@ class KeyTest extends \PHPUnit_Framework_TestCase
         $key->offsetUnset(Key::USAGE_ENCRYPTION);
         $this->assertFalse($key->offsetExists(Key::USAGE_SIGNING));
         $this->assertFalse($key->offsetExists(Key::USAGE_ENCRYPTION));
+    }
+
+
+    public function functionProvider()
+    {
+        return [
+            'offsetGet' => ['offsetGet', [0]],
+            'offsetExists' => ['offsetExists', [0]],
+            'offsetSet' => ['offsetSet', [0, 2]],
+            'offsetUnset' => ['offsetUnset', [0]]
+        ];
     }
 }

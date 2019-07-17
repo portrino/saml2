@@ -16,8 +16,8 @@ class KeywordsTest extends \PHPUnit_Framework_TestCase
     public function testMarshalling()
     {
         $keywords = new Keywords();
-        $keywords->lang = "en";
-        $keywords->Keywords = array("KLM", "royal", "Dutch", "air lines");
+        $keywords->setLanguage("en");
+        $keywords->setKeywords(["KLM", "royal", "Dutch", "air lines"]);
 
         $document = DOMDocumentFactory::fromString('<root />');
         $xml = $keywords->toXML($document->firstChild);
@@ -32,20 +32,22 @@ class KeywordsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("en", $keywordElement->getAttribute('xml:lang'));
     }
 
+
     /**
      * Keyword may not contain a "+", Exception expected.
      */
     public function testKeywordWithPlusSignThrowsException()
     {
         $keywords = new Keywords();
-        $keywords->lang = "en";
-        $keywords->Keywords = array("csharp", "pascal", "c++");
+        $keywords->setLanguage("en");
+        $keywords->setKeywords(["csharp", "pascal", "c++"]);
 
         $document = DOMDocumentFactory::fromString('<root />');
         
         $this->setExpectedException('Exception', 'Keywords may not contain a "+" character');
         $xml = $keywords->toXML($document->firstChild);
     }
+
 
     /**
      * Unmarshalling of a keywords tag
@@ -58,12 +60,13 @@ XML
         );
 
         $keywords = new Keywords($document->firstChild);
-        $this->assertEquals("nl", $keywords->lang);
-        $this->assertCount(3, $keywords->Keywords);
-        $this->assertEquals("KLM", $keywords->Keywords[0]);
-        $this->assertEquals("koninklijke", $keywords->Keywords[1]);
-        $this->assertEquals("luchtvaart maatschappij", $keywords->Keywords[2]);
+        $this->assertEquals("nl", $keywords->getLanguage());
+        $this->assertCount(3, $keywords->getKeywords());
+        $this->assertEquals("KLM", $keywords->getKeywords()[0]);
+        $this->assertEquals("koninklijke", $keywords->getKeywords()[1]);
+        $this->assertEquals("luchtvaart maatschappij", $keywords->getKeywords()[2]);
     }
+
 
     /**
      * Unmarshalling fails if lang attribute not present
@@ -78,6 +81,7 @@ XML
         $this->setExpectedException('Exception', 'Missing lang on Keywords');
         $keywords = new Keywords($document->firstChild);
     }
+
 
     /**
      * Unmarshalling fails if attribute is empty

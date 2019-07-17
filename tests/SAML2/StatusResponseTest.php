@@ -10,11 +10,11 @@ class StatusResponseTest extends \PHPUnit_Framework_TestCase
     public function testMarshalling()
     {
         $response = new Response();
-        $response->setStatus(array(
+        $response->setStatus([
             'Code' => 'OurStatusCode',
             'SubCode' => 'OurSubStatusCode',
             'Message' => 'OurMessageText',
-        ));
+        ]);
 
         $responseElement = $response->toUnsignedXML();
 
@@ -33,6 +33,7 @@ class StatusResponseTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(1, $statusMessageElements);
         $this->assertEquals('OurMessageText', $statusMessageElements[0]->textContent);
     }
+
 
     public function testUnmarshalling()
     {
@@ -65,6 +66,7 @@ XML;
         $this->assertEquals("_bec424fa5103428909a30ff1e31168327f79474984", $response->getInResponseTo());
     }
 
+
     /**
      * A status reponse that is not an error
      */
@@ -95,6 +97,7 @@ XML;
         $this->assertNull($status['SubCode']);
         $this->assertNull($status['Message']);
     }
+
 
     /**
      * See if we can parse a StatusResponse with a subcode
@@ -130,6 +133,7 @@ XML;
         $this->assertEquals("The AuthnRequest could not be validated", $status['Message']);
     }
 
+
     /**
      * Test adding in-response-to to a status message.
      */
@@ -137,9 +141,9 @@ XML;
     {
         $response = new Response();
         $response->setIssueInstant(1453323439);
-        $response->setStatus(array(
+        $response->setStatus([
             'Code' => 'OurStatusCode'
-        ));
+        ]);
         $response->setInResponseTo('aabb12234');
 
         $responseElement = $response->toUnsignedXML();
@@ -161,6 +165,7 @@ STATUSXML
        $expectedStructure = $expectedStructureDocument->documentElement;
        $this->assertEqualXMLStructure($expectedStructure, $responseElement);
     }
+
 
     /**
      * A response without any <Status> element throws exception
@@ -193,6 +198,7 @@ XML;
         $response           = new Response($fixtureResponseDom->firstChild);
     }
 
+
     /**
      * StatusCode is required in a StatusResponse.
      */
@@ -218,5 +224,4 @@ XML;
         $fixtureResponseDom = DOMDocumentFactory::fromString($xml);
         $response           = new Response($fixtureResponseDom->firstChild);
     }
-
 }

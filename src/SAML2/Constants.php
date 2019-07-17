@@ -15,6 +15,11 @@ class Constants
     const AC_PASSWORD = 'urn:oasis:names:tc:SAML:2.0:ac:classes:Password';
 
     /**
+     * PasswordProtectedTransport authentication context.
+     */
+    const AC_PASSWORD_PROTECTED_TRANSPORT = 'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport';
+
+    /**
      * Unspecified authentication context.
      */
     const AC_UNSPECIFIED = 'urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified';
@@ -40,6 +45,11 @@ class Constants
     const BINDING_SOAP = 'urn:oasis:names:tc:SAML:2.0:bindings:SOAP';
 
     /**
+     * The URN for the PAOS binding.
+     */
+    const BINDING_PAOS = 'urn:oasis:names:tc:SAML:2.0:bindings:PAOS';
+
+    /**
      * The URN for the Holder-of-Key Web Browser SSO Profile binding
      */
     const BINDING_HOK_SSO = 'urn:oasis:names:tc:SAML:2.0:profiles:holder-of-key:SSO:browser';
@@ -50,8 +60,8 @@ class Constants
     const CM_BEARER = 'urn:oasis:names:tc:SAML:2.0:cm:bearer';
 
     /**
-    * Holder-of-Key subject confirmation method.
-    */
+     * Holder-of-Key subject confirmation method.
+     */
     const CM_HOK = 'urn:oasis:names:tc:SAML:2.0:cm:holder-of-key';
 
     /**
@@ -193,6 +203,11 @@ class Constants
      * Encrypted NameID format.
      */
     const NAMEID_ENCRYPTED = 'urn:oasis:names:tc:SAML:2.0:nameid-format:encrypted';
+
+    /**
+     * The namespace for the ECP protocol.
+     */
+    const NS_ECP = 'urn:oasis:names:tc:SAML:2.0:profiles:SSO:ecp';
 
     /**
      * The namespace for the SOAP protocol.

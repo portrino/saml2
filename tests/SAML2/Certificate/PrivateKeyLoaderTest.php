@@ -11,10 +11,12 @@ class PrivateKeyLoaderTest extends \PHPUnit_Framework_TestCase
      */
     private $privateKeyLoader;
 
+
     public function setUp()
     {
         $this->privateKeyLoader = new PrivateKeyLoader();
     }
+
 
     /**
      * @group        certificate
@@ -33,6 +35,7 @@ class PrivateKeyLoaderTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($resultingKey->getPassphrase(), $configuredKey->getPassPhrase());
     }
 
+
     /**
      * Dataprovider for 'loading_a_configured_private_key_returns_a_certificate_private_key'
      *
@@ -40,20 +43,28 @@ class PrivateKeyLoaderTest extends \PHPUnit_Framework_TestCase
      */
     public function privateKeyTestProvider()
     {
-        return array(
-            'no passphrase'   => array(
+        return [
+            'no passphrase'   => [
                 new PrivateKey(
                     dirname(__FILE__) . '/File/a_fake_private_key_file.pem',
                     PrivateKey::NAME_DEFAULT
                 )
-            ),
-            'with passphrase' => array(
+            ],
+            'with passphrase' => [
                 new PrivateKey(
                     dirname(__FILE__) . '/File/a_fake_private_key_file.pem',
                     PrivateKey::NAME_DEFAULT,
                     'foo bar baz'
                 )
-            ),
-        );
+            ],
+            'private key as contents' => [
+                new \SAML2\Configuration\PrivateKey(
+                    file_get_contents(dirname(__FILE__) . '/File/a_fake_private_key_file.pem'),
+                    \SAML2\Configuration\PrivateKey::NAME_DEFAULT,
+                    '',
+                    false
+                )
+            ],
+        ];
     }
 }

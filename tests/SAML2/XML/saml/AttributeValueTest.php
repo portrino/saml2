@@ -24,9 +24,9 @@ class AttributeValueTest extends \PHPUnit_Framework_TestCase
         $attribute->Name = 'TheName';
         $attribute->NameFormat = 'TheNameFormat';
         $attribute->FriendlyName = 'TheFriendlyName';
-        $attribute->AttributeValue = array(
+        $attribute->AttributeValue = [
             new AttributeValue(""),
-        );
+        ];
 
         $document = DOMDocumentFactory::fromString('<root />');
         $returnedStructure = $attribute->toXML($document->firstChild);
@@ -46,6 +46,7 @@ ATTRIBUTEVALUE
         $this->assertEquals("", $attribute->AttributeValue[0]->getString());
     }
 
+
     /**
      * Verifies that we can create an AttributeValue from a DOMElement.
      */
@@ -62,9 +63,9 @@ ATTRIBUTEVALUE
 ATTRIBUTEVALUE
         );
 
-        $attribute->AttributeValue = array(
+        $attribute->AttributeValue = [
             new AttributeValue($element->documentElement),
-        );
+        ];
 
         $document = DOMDocumentFactory::fromString('<root />');
         $returnedStructure = $attribute->toXML($document->firstChild);
@@ -84,6 +85,7 @@ ATTRIBUTEXML
         $this->assertEqualXMLStructure($expectedStructure, $returnedStructure);
         $this->assertEquals("urn:collab:person:surftest.nl:example", $attribute->AttributeValue[0]->getString());
     }
+
 
     /**
      * Serialize an AttributeValue and Unserialize that again.

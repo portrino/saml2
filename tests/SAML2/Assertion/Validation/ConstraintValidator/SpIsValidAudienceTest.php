@@ -21,12 +21,14 @@ class SpIsValidAudienceTest extends \PHPUnit_Framework_TestCase
      */
     private $serviceProvider;
 
+
     public function setUp()
     {
         parent::setUp();
         $this->assertion = m::mock('SAML2\Assertion');
         $this->serviceProvider = m::mock('SAML2\Configuration\ServiceProvider');
     }
+
 
     /**
      * @group assertion-validation
@@ -46,13 +48,14 @@ class SpIsValidAudienceTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($result->isValid());
     }
 
+
     /**
      * @group assertion-validation
      * @test
      */
     public function if_the_sp_entity_id_is_not_in_the_valid_audiences_the_assertion_is_invalid()
     {
-        $this->assertion->shouldReceive('getValidAudiences')->andReturn(array('someEntityId'));
+        $this->assertion->shouldReceive('getValidAudiences')->andReturn(['someEntityId']);
         $this->serviceProvider->shouldReceive('getEntityId')->andReturn('anotherEntityId');
 
         $validator = new SpIsValidAudience();
@@ -65,13 +68,14 @@ class SpIsValidAudienceTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(1, $result->getErrors());
     }
 
+
     /**
      * @group assertion-validation
      * @test
      */
     public function the_assertion_is_valid_when_the_current_sp_entity_id_is_a_valid_audience()
     {
-        $this->assertion->shouldReceive('getValidAudiences')->andReturn(array('foo', 'bar', 'validEntityId', 'baz'));
+        $this->assertion->shouldReceive('getValidAudiences')->andReturn(['foo', 'bar', 'validEntityId', 'baz']);
         $this->serviceProvider->shouldReceive('getEntityId')->andReturn('validEntityId');
 
         $validator = new SpIsValidAudience();

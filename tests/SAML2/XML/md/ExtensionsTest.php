@@ -4,6 +4,8 @@ namespace SAML2\XML\md;
 
 use SAML2\Constants;
 use SAML2\DOMDocumentFactory;
+use SAML2\XML\shibmd\Scope;
+use SAML2\XML\alg\DigestMethod;
 
 /**
  * Class \SAML2\XML\md\ExtensionsTest.
@@ -14,7 +16,6 @@ use SAML2\DOMDocumentFactory;
  */
 class ExtensionsTest extends \PHPUnit_Framework_TestCase
 {
-
     /**
      * Adding an empty list to an Extensions element should yield an empty element. If there were contents already
      * there, those should be left untouched.
@@ -28,7 +29,7 @@ class ExtensionsTest extends \PHPUnit_Framework_TestCase
         $d->formatOutput = true;
 
         // add an empty list on an empty Extensions element
-        Extensions::addList($r, array());
+        Extensions::addList($r, []);
         $list = Extensions::getList($r);
         $this->assertCount(0, $list);
         $this->assertEquals(<<<XML
@@ -45,7 +46,7 @@ XML
         $chunk->setAttribute('foo', 'bar');
         $e->appendChild($chunk);
         $r->appendChild($e);
-        Extensions::addList($r, array());
+        Extensions::addList($r, []);
         $list = Extensions::getList($r);
         $this->assertCount(1, $list);
         $this->assertEquals(<<<XML
@@ -118,14 +119,14 @@ XML
         $document->formatOutput = true;
         $r = $document->createElement('root');
         $document->appendChild($r);
-        $scope = new \SAML2\XML\shibmd\Scope();
-        $scope->scope = 'SomeScope';
-        $digest = new \SAML2\XML\alg\DigestMethod();
-        $digest->Algorithm = 'SomeAlgorithm';
-        $extensions = array(
+        $scope = new Scope();
+        $scope->setScope('SomeScope');
+        $digest = new DigestMethod();
+        $digest->setAlgorithm('SomeAlgorithm');
+        $extensions = [
             $scope,
             $digest,
-        );
+        ];
         Extensions::addList($r, $extensions);
         $this->assertEquals(
 <<<XML
